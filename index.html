@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Notifikasi Telegram</title>
+</head>
+<body>
+
+<button onclick="requestNotificationPermission()">Minta Izin Notifikasi</button>
+
+<script>
+async function requestNotificationPermission() {
+  // Meminta izin notifikasi
+  const permissionResult = await Notification.requestPermission();
+  if (permissionResult === 'granted') {
+    console.log('Izin notifikasi diberikan.');
+    // Jika izin diberikan, kirim notifikasi ke Telegram
+    sendNotificationToTelegram('Notifikasi berhasil diaktifkan di website Anda!');
+  } else {
+    console.log('Izin notifikasi ditolak.');
+  }
+}
+
+async function sendNotificationToTelegram(message) {
+  const botToken = '7280736782:AAGoQ8AfBq6EiCZ1ehzEkY5X4PlHUrGszQk'; // Ganti dengan token bot Anda
+  const chatId = '7004610211'; // Ganti dengan ID chat Anda
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.ok) {
+      console.log('Notifikasi berhasil dikirim ke Telegram.');
+    } else {
+      console.error('Gagal mengirim notifikasi ke Telegram:', data.description);
+    }
+  } catch (error) {
+    console.error('Terjadi kesalahan:', error);
+  }
+}
+</script>
+
+</body>
+</html>
